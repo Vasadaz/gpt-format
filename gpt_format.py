@@ -27,20 +27,24 @@ with open("road_fdisk_l", "r") as road_fdisk_l:
 #'''
 
 # Ищем последний подключенный диск. a и b диски не трогать - это raid1.
-activ_disk = [el[:-1] for el in str(cmd_fdisk_l_stdout).split() if "/dev/sd" in el and
-              not "/dev/sda" in el and not "/dev/sdb" in el]
+activ_disk_list = [el[:-1] for el in str(cmd_fdisk_l_stdout).split() if "/dev/sd" in el and
+                   not "/dev/sda" in el and not "/dev/sdb" in el]
 
 
 # Логирование
-for el_disk in activ_disk:
+
+for i_disk in range(len(activ_disk_list)):
     print("*******************************************************")
-    print("Disk found")
+    print(f"Disk found INDEX {i_disk}")
     print("    |     ")
     print("    V     ")
-    print(el_disk, "it info:")
+    print(activ_disk_list[i_disk], "it info:")
 
     for i_search_info_disk in range(len(cmd_fdisk_l_stdout)):
-        if el_disk in cmd_fdisk_l_stdout[i_search_info_disk]:
+        if activ_disk_list[i_disk] in cmd_fdisk_l_stdout[i_search_info_disk]:
             for i_info_disk in range(6):  # Выводим инфу о найденном диске
                 print(cmd_fdisk_l_stdout[i_search_info_disk + i_info_disk].strip())
     print()
+
+input("How index disk format in GPT? (0)")
+i_gpt_disk = activ_disk_list[0]

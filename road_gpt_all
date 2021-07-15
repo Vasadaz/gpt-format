@@ -1,17 +1,3 @@
-root@orvd-sorm-cs:~# fdisk -l | grep dev
-Disk /dev/sda: 9,1 TiB, 10000831348736 bytes, 19532873728 sectors
-/dev/sda1         2048        4095        2048    1M BIOS boot
-/dev/sda2         4096 19465971711 19465967616  9,1T Linux RAID
-/dev/sda3  19465971712 19532871679    66899968 31,9G Linux RAID
-Disk /dev/sdb: 9,1 TiB, 10000831348736 bytes, 19532873728 sectors
-/dev/sdb1         2048        4095        2048    1M BIOS boot
-/dev/sdb2         4096 19465971711 19465967616  9,1T Linux RAID
-/dev/sdb3  19465971712 19532871679    66899968 31,9G Linux RAID
-Disk /dev/md1: 31,9 GiB, 34236006400 bytes, 66867200 sectors
-Disk /dev/md0: 9,1 TiB, 9966441201664 bytes, 19465705472 sectors
-Disk /dev/sdk: 9,1 TiB, 10000831348736 bytes, 19532873728 sectors
-/dev/sdk1  *       2048    1126399    1124352  549M  7 HPFS/NTFS/exFAT
-/dev/sdk2       1126400 4294967295 4293840896    2T  7 HPFS/NTFS/exFAT
 root@orvd-sorm-cs:~# gdisk /dev/sdk
 GPT fdisk (gdisk) version 1.0.1
 
