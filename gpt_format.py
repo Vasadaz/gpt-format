@@ -5,35 +5,42 @@
 2) Добавить звуковое соправождение с помощью speaker, для слепого форматирования
 """
 
-#import subprocess
+# pexpect Модуль для работы с дочерними процесами. Аналог expect в Unix.
 import pexpect
 
-"""
-try:
-    # Передаём в процесс run команду "fdisk -l" ввиде списка ["fdisk", "-l"]
-    # capture_output=True При Истине - ответ команды не будет выведен в консоль,
-    #   но сохраниться в объекте subprocess.CompletedProcess
-    # text=True При Истине - текст stdout сохраняет строко вид, иначе байтовая последовательность.
-    # check=True При Истине - поднимается ошибка при её возникновении.
-    sudo_pass = subprocess.Popen(["echo", '"1234"'], stdout=subprocess.PIPE)
-    cmd_sudo_s = subprocess.Popen(["sudo", "-s"], stdin=sudo_pass)
-    cmd_fdisk_l = subprocess.run(["fdisk", "-l"], capture_output=True, text=True, check=True)
+# Создаём объект с командой fdisk -l
+cmd_fdisk_l = pexpect.spawn("fdisk -l")
+# Вызов объекта cmd_fdisk_l и ожидание окончания его вывода для появления атрибута .before
+cmd_fdisk_l.expect(pexpect.EOF)
 
+# Преобразование атрибута .before в кодировку utf-8
+#cmd_fdisk_l_stdout = cmd_fdisk_l.before.decode("utf-8")
+#print(cmd_fdisk_l_stdout)
 
+#'''
+# Имитация команда fdisk -l
+with open("road_fdisk_l", "r") as road_fdisk_l:
+    cmd_fdisk_l_stdout = road_fdisk_l.readlines()
+    road_fdisk_l.close()
 
-except subprocess.CalledProcessError as e:
-    # Поднимаем ошибку с её описанием взятого из объекта subprocess.CalledProcessError
-    print(f"Ошибка команды {e.cmd}!\n{e.stderr}")
-
-# road_gpt команда "fdisk -l" в файле при отсутствии сервера
-file_1 = open("road_gpt")
-cmd_fdisk.stdout = file_1.read()
-file_1.close()
-"""
+#print(cmd_fdisk_l_stdout)
+#'''
 
 # Ищем последний подключенный диск. a и b диски не трогать - это raid1.
-# cmd_fdisk_list = [el[:-1] for el in cmd_fdisk_l.stdout.split() if "/dev/sd" in el and
-#                  not "/dev/sda" in el and not "/dev/sdb" in el][0]
+activ_disk = [el[:-1] for el in str(cmd_fdisk_l_stdout).split() if "/dev/sd" in el and
+              not "/dev/sda" in el and not "/dev/sdb" in el]
 
-#print(f"Найден диск {cmd_fdisk_list}")
 
+# Логирование
+for el_disk in activ_disk:
+    print("*******************************************************")
+    print("Disk found")
+    print("    |     ")
+    print("    V     ")
+    print(el_disk, "it info:")
+
+    for i_search_info_disk in range(len(cmd_fdisk_l_stdout)):
+        if el_disk in cmd_fdisk_l_stdout[i_search_info_disk]:
+            for i_info_disk in range(6):  # Выводим инфу о найденном диске
+                print(cmd_fdisk_l_stdout[i_search_info_disk + i_info_disk].strip())
+    print()
