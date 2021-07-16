@@ -1,0 +1,4 @@
+Command (? for help): o
+This option deletes all partitions and creates a new protective MBR.
+Proceed? (Y/N): y
+
