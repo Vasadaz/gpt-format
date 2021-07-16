@@ -19,7 +19,7 @@ cmd_fdisk_l.expect(pexpect.EOF)
 
 #'''
 # Имитация команда fdisk -l
-with open("road_fdisk_l", "r") as road_fdisk_l:
+with open("./not_server/road_fdisk_l", "r") as road_fdisk_l:
     cmd_fdisk_l_stdout = road_fdisk_l.read()
     road_fdisk_l.close()
 
