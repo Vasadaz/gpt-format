@@ -8,47 +8,53 @@
 # pexpect Модуль для работы с дочерними процесами. Аналог expect в Unix.
 import pexpect
 
-# Создаём объект с командой fdisk -l
-cmd_fdisk_l = pexpect.spawn("fdisk -l")
-# Вызов объекта cmd_fdisk_l и ожидание окончания его вывода для появления атрибута .before
-cmd_fdisk_l.expect(pexpect.EOF)
 
-# Преобразование атрибута .before в кодировку utf-8
-#cmd_fdisk_l_stdout = cmd_fdisk_l.before.decode("utf-8")
-#print(cmd_fdisk_l_stdout.split("\n"))
+# Функция для команды fdisk -l
+def fun_fdisk_l():
+    # Создаём объект с командой fdisk -l
+    cmd_fdisk_l = pexpect.spawn("fdisk -l")
+    # Вызов объекта cmd_fdisk_l и ожидание окончания его вывода для появления атрибута .before
+    cmd_fdisk_l.expect(pexpect.EOF)
 
-#'''
-# Имитация команда fdisk -l
-with open("./not_server/road_fdisk_l", "r") as road_fdisk_l:
-    cmd_fdisk_l_stdout = road_fdisk_l.read()
-    road_fdisk_l.close()
+    # Преобразование атрибута .before в кодировку utf-8
+    #cmd_fdisk_l_stdout = cmd_fdisk_l.before.decode("utf-8")
+    #print(cmd_fdisk_l_stdout.split("\n"))
 
-#print(cmd_fdisk_l_stdout)
-#'''
+    #'''
+    # Имитация команда fdisk -l
+    with open("./not_server/road_fdisk_l", "r") as road_fdisk_l:
+        cmd_fdisk_l_stdout = road_fdisk_l.read()
+        road_fdisk_l.close()
 
-# Ищем последний подключенный диск. a и b диски не трогать - это raid1.
-activ_disk_list = [el[:-1] for el in cmd_fdisk_l_stdout.split() if "/dev/sd" in el and
-                   not "/dev/sda" in el and not "/dev/sdb" in el]
+    #print(cmd_fdisk_l_stdout)
+    #'''
+
+    # Ищем последний подключенный диск. a и b диски не трогать - это raid1.
+    activ_disk_list = [el[:-1] for el in cmd_fdisk_l_stdout.split() if "/dev/sd" in el and
+                       not "/dev/sda" in el and not "/dev/sdb" in el]
+
+    # Логирование
+    if len(activ_disk_list) == 0:
+        print("\n***************\nDisk not found\n***************\n")
+        exit()
+
+    for i_disk in range(len(activ_disk_list)):
+        print("\n*******************************************************")
+        print("Disk found {} INDEX-{}\n".format(activ_disk_list[i_disk],i_disk))
+
+        for i_search_info_disk in range(len(cmd_fdisk_l_stdout.split("\n"))):
+            if activ_disk_list[i_disk] in cmd_fdisk_l_stdout.split("\n")[i_search_info_disk]:
+                for i_info_disk in range(6):  # Выводим инфу о найденном диске
+                    try:
+                        print(cmd_fdisk_l_stdout.split("\n")[i_search_info_disk + i_info_disk].strip())
+                    except IndexError:
+                        pass
+        print("*******************************************************")
+    return activ_disk_list
 
 
+activ_disk_list = fun_fdisk_l()
 
-# Логирование
-if len(activ_disk_list) == 0:
-    print("\n***************\nDisk not found\n***************\n")
-    exit()
-
-for i_disk in range(len(activ_disk_list)):
-    print("\n*******************************************************")
-    print("Disk found {} INDEX-{}\n".format(activ_disk_list[i_disk],i_disk))
-
-    for i_search_info_disk in range(len(cmd_fdisk_l_stdout.split("\n"))):
-        if activ_disk_list[i_disk] in cmd_fdisk_l_stdout.split("\n")[i_search_info_disk]:
-            for i_info_disk in range(6):  # Выводим инфу о найденном диске
-                try:
-                    print(cmd_fdisk_l_stdout.split("\n")[i_search_info_disk + i_info_disk].strip())
-                except IndexError:
-                    pass
-    print("*******************************************************")
 
 # Выьераем диск из найденого для дальнейшего форматирования
 i_gpt_disk = input("\nHow index disk format in GPT? (0): ")
@@ -67,3 +73,39 @@ if go_format_gpt == "no":
     exit()
 print("GPT___" * 8)
 
+
+# Создаём объект с командой gdisk /dev/sd*
+cmd_gdisk = pexpect.spawn("gdisk {}".format(gpt_disk))
+print("Go command - gdisk {}".format(gpt_disk))
+cmd_gdisk.expect("Command")
+cmd_gdisk.sendline("p")
+print("Find path on disk")
+
+"""
+cmd_gdisk.sendline("d")
+cmd_gdisk.expect("Partition")
+
+cmd_gdisk.sendline("1")
+cmd_gdisk.expect("Command")
+cmd_gdisk.sendline("d")
+"""
+
+cmd_gdisk.expect("Command")
+cmd_gdisk.sendline("o")
+print("Format to GPT")
+cmd_gdisk.expect("Proceed?")
+cmd_gdisk.sendline("Y")
+print("DONE Format to GPT")
+
+
+cmd_gdisk.expect("Command")
+cmd_gdisk.sendline("w")
+print("Write format")
+cmd_gdisk.expect("Do")
+cmd_gdisk.sendline("Y")
+print("DONE write format")
+
+# Проверяем результат
+fun_fdisk_l()
+
+exit()
