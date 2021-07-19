@@ -169,6 +169,8 @@ if sys.argv[2] != "0":
         print("NON STOP " * 5)
         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         fun_formatting()
+        os.system("beep -f 5000 -l 100 -r 3 -d 100")
         time.sleep(5)
+
 else:
     fun_formatting()
