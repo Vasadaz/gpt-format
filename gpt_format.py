@@ -10,24 +10,24 @@ import pexpect
 
 
 # Функция для команды fdisk -l
-def fun_fdisk_l():
+def fun_fdisk_l(result=0):
     # Создаём объект с командой fdisk -l
     cmd_fdisk_l = pexpect.spawn("fdisk -l")
     # Вызов объекта cmd_fdisk_l и ожидание окончания его вывода для появления атрибута .before
     cmd_fdisk_l.expect(pexpect.EOF)
 
     # Преобразование атрибута .before в кодировку utf-8
-    # cmd_fdisk_l_stdout = cmd_fdisk_l.before.decode("utf-8")
+    cmd_fdisk_l_stdout = cmd_fdisk_l.before.decode("utf-8")
     # print(cmd_fdisk_l_stdout.split("\n"))
 
-    # '''
+    '''
     # Имитация команда fdisk -l
     with open("./not_server/road_fdisk_l", "r") as road_fdisk_l:
         cmd_fdisk_l_stdout = road_fdisk_l.read()
         road_fdisk_l.close()
 
     # print(cmd_fdisk_l_stdout)
-    # '''
+    '''
 
     # Ищем последний подключенный диск. a и b диски не трогать - это raid1.
     find_disk_list = [el[:-1] for el in cmd_fdisk_l_stdout.split() if "/dev/sd" in el and
@@ -40,7 +40,10 @@ def fun_fdisk_l():
 
     for i_disk in range(len(find_disk_list)):
         print("\n*******************************************************")
-        print("Disk found {} INDEX-{}\n".format(find_disk_list[i_disk], i_disk))
+        if result == 0:
+            print("Disk found {} INDEX-{}\n".format(find_disk_list[i_disk], i_disk))
+        else:
+            print("FORMATTING RESULT\n")
 
         for i_search_info_disk in range(len(cmd_fdisk_l_stdout.split("\n"))):
             if find_disk_list[i_disk] in cmd_fdisk_l_stdout.split("\n")[i_search_info_disk]:
@@ -65,33 +68,34 @@ else:
 
 print("*************************************")
 print("Disk {} will be format in GTP".format(gpt_disk))
-print("*************************************")
 
 # Подтверждение
 go_format_gpt = input("\nGo format in GPT? (Yes/no): ")
 if go_format_gpt == "no":
     exit()
-print("GPT___" * 8)
 
 # Создаём объект с командой gdisk /dev/sd*
 cmd_gdisk = pexpect.spawn("gdisk {}".format(gpt_disk))
-print("Go command - gdisk {}".format(gpt_disk))
+print("\nGo command - gdisk {}\n".format(gpt_disk))
 
 # Удаляем все разделы на диске
-cmd_gdisk_path = 1
+cmd_gdisk.expect("Command")
+cmd_gdisk.sendline("d")
+cmd_gdisk_partition = 1  # Маркер разделов диска
+# Цикл для удаления n-ого количесивка разделов на диске
 while True:
-    cmd_gdisk.expect("Command")
-    cmd_gdisk.sendline("d")
-    if cmd_gdisk.expect("Partition"):
-        print("Delete {} partition".format(cmd_gdisk_path))
-        cmd_gdisk.sendline(str(cmd_gdisk_path))
-        cmd_gdisk_path += 1
+    if cmd_gdisk.expect("Command") != 0:
+        cmd_gdisk.sendline(str(cmd_gdisk_partition))
+        print("Delete {} partition".format(cmd_gdisk_partition))
+        cmd_gdisk_partition += 1
     else:
-        print("All partitions deleted!")
+        # Здесь выполнилась команда из условия if, т.е. её код = 1.
+        # Следующая команда должна быть expect.sedline
+        print("All partitions deleted!\n")
         break
 
 # Форматируем диск в GPT
-cmd_gdisk.expect("Command")
+# cmd_gdisk.expect("Command")
 cmd_gdisk.sendline("o")
 print("Format to GPT")
 cmd_gdisk.expect("Proceed?")
@@ -106,5 +110,8 @@ cmd_gdisk.expect("Do")
 cmd_gdisk.sendline("Y")
 print("DONE write format\n")
 
+print("Disk {} formated in GTP".format(gpt_disk))
+print("*************************************")
+
 # Проверяем результат
-fun_fdisk_l()
+fun_fdisk_l(1)
