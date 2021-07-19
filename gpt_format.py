@@ -51,7 +51,7 @@ def fun_fdisk_l(result=0):
 
     # Ищем последний подключенный диск. a и b диски не трогать - это raid1.
     find_disk_list = [el[:-1] for el in cmd_fdisk_l_stdout.split() if "/dev/sd" in el and
-                      "/dev/sda" not in el and "/dev/sdb" not in el]
+                      "/dev/sda" not in el and "/dev/sdb" not in el and "/dev/sdc" not in el]
 
     # Логирование
     if len(find_disk_list) == 0:
@@ -155,6 +155,8 @@ def fun_formatting():
     # Проверяем результат
     fun_fdisk_l(1)
 
+    os.system("beep -f 2000 -l 100 -r 3 -d 100")
+    time.sleep(10)
 
 # Условие для установки безконтрольного звукового режима
 if len(sys.argv) == 1:
@@ -169,8 +171,8 @@ if sys.argv[2] != "0":
         print("NON STOP " * 5)
         print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
         fun_formatting()
-        os.system("beep -f 5000 -l 100 -r 3 -d 100")
-        time.sleep(5)
+        os.system("beep -f 100 -l 100 -r 3 -d 100")
+        time.sleep(1)
 
 else:
     fun_formatting()
