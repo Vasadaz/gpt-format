@@ -32,7 +32,7 @@ def fun_fdisk_l(result=0):
 
     # Ищем последний подключенный диск. a и b диски не трогать - это raid1.
     find_disk_list = [el[:-1] for el in cmd_fdisk_l_stdout.split() if "/dev/sd" in el and
-                      not "/dev/sda" in el and not "/dev/sdb" in el]
+                      "/dev/sda" not in el and "/dev/sdb" not in el]
 
     # Логирование
     if len(find_disk_list) == 0:
