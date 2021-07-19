@@ -20,19 +20,23 @@
     sys.args[1] = "0" ПО УМОЛЧАНИЮ.Безконтрольное форматирование
     sys.args[1] = "1" контрольное форматирование
     sys.args[1] = "2" контрольное форматирование без звука.
+
+3) Контроль постояного мониторинга дисков:
+    Указывается только вместее с контролем форматирования!
+    sys.args[2] = "0" ПО УМОЛЧАНИЮ.Безконтрольное форматирование
+    sys.args[2] = "1" вечный цикл
 """
 
 import os
 import sys
-import pexpect  # pexpect Модуль для работы с дочерними процесами. Аналог expect в Unix.
 import time
+import pexpect  # pexpect Модуль для работы с дочерними процесами. Аналог expect в Unix.
 
 
 def fun_beep(freq_hz: int, len_ms: int):
     if sys.argv[1] != "2":  # Условие для отключения звука
         os.system("beep -f {} -l {}".format(freq_hz, len_ms))  # ЗВУКОВОЙ СИГНАЛ
-        time.sleep(2)
-
+        time.sleep(1)
 
 # Функция для команды fdisk -l
 def fun_fdisk_l(result=0):
@@ -52,7 +56,7 @@ def fun_fdisk_l(result=0):
     # Логирование
     if len(find_disk_list) == 0:
         print("\n***************\nDisk not found\n***************\n")
-        exit()
+        return find_disk_list
 
     for i_disk in range(len(find_disk_list)):
         print("\n*******************************************************")
@@ -60,7 +64,7 @@ def fun_fdisk_l(result=0):
             fun_beep(500, 100)  # ЗВУКОВОЙ СИГНАЛ
             print("Disk found {} INDEX-{}\n".format(find_disk_list[i_disk], i_disk))
         else:
-            fun_beep(1100, 500)  # ЗВУКОВОЙ СИГНАЛ
+            fun_beep(1111, 1111)  # ЗВУКОВОЙ СИГНАЛ
             print("FORMATTING RESULT\n")
 
         for i_search_info_disk in range(len(cmd_fdisk_l_stdout.split("\n"))):
@@ -73,78 +77,98 @@ def fun_fdisk_l(result=0):
         print("*******************************************************")
     return find_disk_list  # Возвращаем список найденных дисков
 
+
+def fun_formatting():
+    # Вызов функции команды fdisk -l
+    disk_list = fun_fdisk_l()
+
+    # Условие для прекращения функции
+    if len(disk_list) == 0:
+        return
+
+    if sys.argv[1] != "0":  # Условие для контроля
+        # Выбираем диск из найденого для дальнейшего форматирования
+        i_gpt_disk = input("\nHow index disk format in GPT? (0): ")
+        if i_gpt_disk == "":
+            gpt_disk = disk_list[0]
+        else:
+            gpt_disk = disk_list[int(i_gpt_disk.strip())]
+    else:
+        gpt_disk = disk_list[0]
+
+    print("*************************************")
+    print("Disk {} will be format in GTP".format(gpt_disk))
+
+    # Подтверждение
+    if sys.argv[1] != "0":  # Условие для контроля
+        go_format_gpt = input("\nGo format in GPT? (Yes/no): ")
+        if go_format_gpt == "no":
+            exit()
+
+    # Создаём объект с командой gdisk /dev/sd*
+    fun_beep(600, 100)  # ЗВУКОВОЙ СИГНАЛ
+    cmd_gdisk = pexpect.spawn("gdisk {}".format(gpt_disk))
+    print("\nGo command - gdisk {}\n".format(gpt_disk))
+
+    # Удаляем все разделы на диске
+    fun_beep(700, 100)  # ЗВУКОВОЙ СИГНАЛ
+    cmd_gdisk.expect("Command")
+    cmd_gdisk.sendline("d")
+    cmd_gdisk_partition = 1  # Маркер разделов диска
+    # Цикл для удаления n-ого количесивка разделов на диске
+    while True:
+        if cmd_gdisk.expect("Command") != 0:
+            fun_beep(700, 50)  # ЗВУКОВОЙ СИГНАЛ
+            cmd_gdisk.sendline(str(cmd_gdisk_partition))
+            print("Delete {} partition".format(cmd_gdisk_partition))
+            cmd_gdisk_partition += 1
+        else:
+            # Здесь выполнилась команда из условия if, т.е. её код = 1.
+            # Следующая команда должна быть expect.sendline
+            fun_beep(700, 100)  # ЗВУКОВОЙ СИГНАЛ
+            print("All partitions deleted!\n")
+            break
+
+    # Форматируем диск в GPT
+    fun_beep(800, 100)  # ЗВУКОВОЙ СИГНАЛ
+    # cmd_gdisk.expect("Command")
+    cmd_gdisk.sendline("o")
+    print("Format to GPT")
+    cmd_gdisk.expect("Proceed?")
+    cmd_gdisk.sendline("Y")
+    print("DONE Format to GPT\n")
+
+    # Записываем результат
+    fun_beep(900, 100)  # ЗВУКОВОЙ СИГНАЛ
+    cmd_gdisk.expect("Command")
+    cmd_gdisk.sendline("w")
+    print("Write format")
+    cmd_gdisk.expect("Do")
+    cmd_gdisk.sendline("Y")
+    print("DONE write format\n")
+
+    # Завершение действий
+    fun_beep(1000, 100)  # ЗВУКОВОЙ СИГНАЛ
+    print("Disk {} formated in GTP".format(gpt_disk))
+    print("*************************************")
+
+    # Проверяем результат
+    fun_fdisk_l(1)
+
+
 # Условие для установки безконтрольного звукового режима
 if len(sys.argv) == 1:
-    sys.argv.append("0")
+    sys.argv.append("0")  # Установка режима контроля
+    sys.argv.append("0")  # Установка режима цикла
+elif len(sys.argv) == 2:
+    sys.argv.append("0")  # Установка режима цикла
 
-# Вызов функции команды fdisk -l
-disk_list = fun_fdisk_l()
-
-if sys.argv[1] != "0":  # Условие для контроля
-    # Выбираем диск из найденого для дальнейшего форматирования
-    i_gpt_disk = input("\nHow index disk format in GPT? (0): ")
-    if i_gpt_disk == "":
-        gpt_disk = disk_list[0]
-    else:
-        gpt_disk = disk_list[int(i_gpt_disk.strip())]
+if sys.argv[2] != "0":
+    while True:
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        print("NON STOP " * 5)
+        print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+        fun_formatting()
+        time.sleep(5)
 else:
-    gpt_disk = disk_list[0]
-
-print("*************************************")
-print("Disk {} will be format in GTP".format(gpt_disk))
-
-# Подтверждение
-if sys.argv[1] != "0":  # Условие для контроля
-    go_format_gpt = input("\nGo format in GPT? (Yes/no): ")
-    if go_format_gpt == "no":
-        exit()
-
-# Создаём объект с командой gdisk /dev/sd*
-fun_beep(600, 100)  # ЗВУКОВОЙ СИГНАЛ
-cmd_gdisk = pexpect.spawn("gdisk {}".format(gpt_disk))
-print("\nGo command - gdisk {}\n".format(gpt_disk))
-
-# Удаляем все разделы на диске
-fun_beep(700, 100)  # ЗВУКОВОЙ СИГНАЛ
-cmd_gdisk.expect("Command")
-cmd_gdisk.sendline("d")
-cmd_gdisk_partition = 1  # Маркер разделов диска
-# Цикл для удаления n-ого количесивка разделов на диске
-while True:
-    if cmd_gdisk.expect("Command") != 0:
-        fun_beep(700, 50)  # ЗВУКОВОЙ СИГНАЛ
-        cmd_gdisk.sendline(str(cmd_gdisk_partition))
-        print("Delete {} partition".format(cmd_gdisk_partition))
-        cmd_gdisk_partition += 1
-    else:
-        # Здесь выполнилась команда из условия if, т.е. её код = 1.
-        # Следующая команда должна быть expect.sendline
-        fun_beep(700, 100)  # ЗВУКОВОЙ СИГНАЛ
-        print("All partitions deleted!\n")
-        break
-
-# Форматируем диск в GPT
-fun_beep(800, 100)  # ЗВУКОВОЙ СИГНАЛ
-# cmd_gdisk.expect("Command")
-cmd_gdisk.sendline("o")
-print("Format to GPT")
-cmd_gdisk.expect("Proceed?")
-cmd_gdisk.sendline("Y")
-print("DONE Format to GPT\n")
-
-# Записываем результат
-fun_beep(900, 100)  # ЗВУКОВОЙ СИГНАЛ
-cmd_gdisk.expect("Command")
-cmd_gdisk.sendline("w")
-print("Write format")
-cmd_gdisk.expect("Do")
-cmd_gdisk.sendline("Y")
-print("DONE write format\n")
-
-# Завершение действий
-fun_beep(1000, 100)  # ЗВУКОВОЙ СИГНАЛ
-print("Disk {} formated in GTP".format(gpt_disk))
-print("*************************************")
-
-# Проверяем результат
-fun_fdisk_l(1)
+    fun_formatting()
