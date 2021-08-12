@@ -32,6 +32,7 @@ import sys
 import time
 import pexpect  # pexpect Модуль для работы с дочерними процессами. Аналог expect в Unix.
 
+VARIABLE = "GPT FORMATTER v1.1"
 
 def fun_beep(freq_hz: int, len_ms: int):
     if sys.argv[1] != "2":  # Условие для отключения звука
@@ -54,6 +55,7 @@ def fun_fdisk_l(result=0):
                       "/dev/sda" not in el and "/dev/sdb" not in el and "/dev/sdc" not in el]
 
     # Логирование
+    print(VARIABLE)
     if len(find_disk_list) == 0:
         print("\n***************\nDisk not found\n***************\n")
         return find_disk_list
