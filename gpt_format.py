@@ -33,7 +33,8 @@ import sys
 import time
 import pexpect  # pexpect Модуль для работы с дочерними процессами. Аналог expect в Unix.
 
-VARIABLE = "GPT FORMATTER v1.2"
+# Release v1.3
+VARIABLE = "GPT FORMATTER v1.3"
 
 
 def fun_beep(freq_hz=0, len_ms=0, end_beep=False):
